@@ -1,0 +1,21 @@
+spring:
+    application:
+        name: backend
+
+canary:
+    application:
+        name: Canary Backend
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health,info
+    endpoint:
+        health:
+            probes:
+                enabled: true
+
+logging:
+    level:
+        com.canary.backend: INFO

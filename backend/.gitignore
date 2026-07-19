@@ -1,0 +1,19 @@
+# Virtual Environment
+.venv
+
+# IDE
+.idea
+.vscode
+.oca
+
+# OS files
+.DS_Store
+
+# logs
+*.log
+
+# Python cache
+__pycache__
+
+# build
+target/
