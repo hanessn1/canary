@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /** Converts expected validation failures and unexpected errors into the standard API envelope. */
@@ -50,6 +51,30 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(NoResourceFoundException.class)
 	public ResponseEntity<ApiResponse<Void>> handleMissingResource(NoResourceFoundException exception) {
 		return errorResponse(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", "Resource not found", Map.of());
+	}
+
+	@ExceptionHandler(DocumentNotFoundException.class)
+	public ResponseEntity<ApiResponse<Void>> handleDocumentNotFound(DocumentNotFoundException exception) {
+		return errorResponse(HttpStatus.NOT_FOUND, "DOCUMENT_NOT_FOUND", exception.getMessage(), Map.of());
+	}
+
+	@ExceptionHandler(InvalidDocumentUploadException.class)
+	public ResponseEntity<ApiResponse<Void>> handleInvalidDocumentUpload(InvalidDocumentUploadException exception) {
+		HttpStatus status = "FILE_TOO_LARGE".equals(exception.getCode())
+				? HttpStatus.PAYLOAD_TOO_LARGE
+				: HttpStatus.BAD_REQUEST;
+		return errorResponse(status, exception.getCode(), exception.getMessage(), Map.of());
+	}
+
+	@ExceptionHandler(MaxUploadSizeExceededException.class)
+	public ResponseEntity<ApiResponse<Void>> handleMaximumUploadSizeExceeded(MaxUploadSizeExceededException exception) {
+		return errorResponse(HttpStatus.PAYLOAD_TOO_LARGE, "FILE_TOO_LARGE", "The file exceeds the configured maximum upload size", Map.of());
+	}
+
+	@ExceptionHandler(DocumentStorageException.class)
+	public ResponseEntity<ApiResponse<Void>> handleDocumentStorage(DocumentStorageException exception) {
+		LOGGER.error("Document storage failure", exception);
+		return errorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "DOCUMENT_STORAGE_ERROR", "Unable to process document storage", Map.of());
 	}
 
 	@ExceptionHandler(Exception.class)

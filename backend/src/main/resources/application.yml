@@ -1,10 +1,27 @@
-spring:
-    application:
-        name: backend
-
 canary:
     application:
         name: Canary Backend
+    documents:
+        upload-directory: storage/uploads
+        max-upload-size: 10MB
+        allowed-content-types:
+            - application/pdf
+            - text/plain
+            - text/markdown
+            - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+        allowed-extensions:
+            - pdf
+            - txt
+            - md
+            - docx
+
+spring:
+    application:
+        name: backend
+    servlet:
+        multipart:
+            max-file-size: ${canary.documents.max-upload-size}
+            max-request-size: ${canary.documents.max-upload-size}
 
 management:
     endpoints:
