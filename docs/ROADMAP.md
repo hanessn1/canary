@@ -6,7 +6,6 @@
 - Backend
 - Frontend
 - Docker
-- Authentication
 
 ## Phase 2
 
