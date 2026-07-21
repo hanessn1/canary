@@ -1,6 +1,8 @@
 canary:
     application:
         name: Canary Backend
+    ai:
+        service-url: ${CANARY_AI_SERVICE_URL:http://localhost:8000}
     documents:
         upload-directory: storage/uploads
         max-upload-size: 10MB

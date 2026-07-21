@@ -10,9 +10,10 @@ export default function ChatView() {
   const { activeConversation, sendMessage } = useChat()
   const { documents } = useDocuments()
   const [draft, setDraft] = useState('')
-  const [isInspectorOpen, setInspectorOpen] = useState(true)
+  const [isInspectorOpen, setInspectorOpen] = useState(false)
   const [isScopeOpen, setScopeOpen] = useState(false)
   const [selectedScope, setSelectedScope] = useState('All documents')
+  const [activeCitation, setActiveCitation] = useState(null)
   const scopeRef = useRef(null)
   const messagesEndRef = useRef(null)
 
@@ -34,7 +35,10 @@ export default function ChatView() {
 
   const submit = () => {
     if (!draft.trim()) return
-    sendMessage(draft.trim())
+    const targetDocIds = selectedScope === 'All documents'
+      ? documents.map(d => d.id)
+      : [documents.find(d => d.originalFilename === selectedScope)?.id].filter(Boolean)
+    sendMessage(draft.trim(), targetDocIds)
     setDraft('')
   }
 
@@ -92,17 +96,34 @@ export default function ChatView() {
           <div className={styles.spacer} />
           {activeConversation.messages.map((message) => (
             <article key={message.id} className={`${styles.message} ${styles[message.role]}`}>
-              {message.content}
+              {message.role === 'assistant' && !message.content ? (
+                <div className={styles.loadingDots}>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              ) : (
+                <p>{message.content}</p>
+              )}
+              {message.citations && message.citations.length > 0 && (
+                <div className={styles.citationList} style={{ marginTop: '8px', display: 'flex', gap: '6px' }}>
+                  {message.citations.map((citation, idx) => (
+                    <button
+                      key={idx}
+                      className={styles.citation}
+                      onClick={() => {
+                        setActiveCitation(citation)
+                        setInspectorOpen(true)
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      [{idx + 1}]
+                    </button>
+                  ))}
+                </div>
+              )}
             </article>
           ))}
-
-          {activeConversation.id === 'chat-1' && activeConversation.messages.length === 1 && (
-            <article className={`${styles.message} ${styles.assistant}`}>
-              <p>{sampleAnswer}</p>
-              <p>Use the Library to upload source material. The citation inspector will become active when the backend RAG pipeline is available.</p>
-              <button className={styles.citation} onClick={() => setInspectorOpen(true)}>[ 1 ]</button>
-            </article>
-          )}
           <div ref={messagesEndRef} />
         </div>
 
@@ -132,17 +153,29 @@ export default function ChatView() {
           </button>
         </header>
         <div className={styles.inspectorContent}>
-          <p className={styles.inspectorLabel}>Source document</p>
-          <strong className={styles.source}><FileText size={18} /> security-notes.md</strong>
-          <p className={styles.inspectorLabel}>Chunk reference</p>
-          <span className={styles.chunk}>Section 3.2</span>
-          <p className={styles.inspectorLabel}>Retrieved excerpt</p>
-          <blockquote>
-            <p>Access to systems and data must be limited to authorized users and services only.</p>
-            <mark>Enforce multi-factor authentication for all interactive access, with stronger requirements for privileged accounts.</mark>
-            <p>Apply the principle of least privilege and review access rights regularly.</p>
-          </blockquote>
-          <button className={styles.openSource} onClick={() => console.log('Open source')}>Open source document</button>
+          {activeCitation ? (
+            <>
+              <p className={styles.inspectorLabel}>Source document</p>
+              <strong className={styles.source}>
+                <FileText size={18} /> {
+                  documents.find(d => d.id === activeCitation.document_id)?.originalFilename 
+                  || activeCitation.document_id.substring(0, 8) + '...'
+                }
+              </strong>
+              <p className={styles.inspectorLabel}>Chunk reference</p>
+              <span className={styles.chunk}>Page {activeCitation.page} (Score: {
+                activeCitation.combined_score 
+                  ? activeCitation.combined_score.toFixed(2) 
+                  : (activeCitation.score ? activeCitation.score.toFixed(2) : 'N/A')
+              })</span>
+              <p className={styles.inspectorLabel}>Retrieved excerpt</p>
+              <blockquote>
+                <p>{activeCitation.text}</p>
+              </blockquote>
+            </>
+          ) : (
+            <p style={{ opacity: 0.7, fontSize: '0.9rem' }}>Select a citation index from the chat messages to inspect the source context.</p>
+          )}
         </div>
       </aside>
     </div>

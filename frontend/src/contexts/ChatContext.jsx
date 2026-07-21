@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useState } from 'react'
+import { chatApi } from '../services/api'
 
 const ChatContext = createContext(null)
 
@@ -86,40 +87,101 @@ export function ChatProvider({ children }) {
     }
   }
 
-  const sendMessage = (content) => {
-    // Add user message immediately
+  const sendMessage = async (content, documentIds = []) => {
+    if (!documentIds || documentIds.length === 0) {
+      setConversations((current) =>
+        current.map((chat) => {
+          if (chat.id === activeId) {
+            return {
+              ...chat,
+              messages: [
+                ...chat.messages,
+                { id: crypto.randomUUID(), role: 'user', content },
+                { id: crypto.randomUUID(), role: 'assistant', content: 'Please upload and select at least one document to chat.' }
+              ]
+            }
+          }
+          return chat
+        })
+      )
+      return
+    }
+
+    const userMsgId = crypto.randomUUID()
+    const assistantMsgId = crypto.randomUUID()
     setConversations((current) =>
       current.map((chat) => {
         if (chat.id === activeId) {
-          const userMsg = { id: crypto.randomUUID(), role: 'user', content }
           return {
             ...chat,
-            messages: [...chat.messages, userMsg]
+            messages: [
+              ...chat.messages,
+              { id: userMsgId, role: 'user', content },
+              { id: assistantMsgId, role: 'assistant', content: '', citations: [] }
+            ]
           }
         }
         return chat
       })
     )
 
-    // Simulate mock AI response with a short delay
-    setTimeout(() => {
+    const history = activeConversation.messages
+      .filter(m => m.id !== userMsgId && m.id !== assistantMsgId && (m.role === 'user' || m.role === 'assistant'))
+      .map(m => ({ role: m.role, content: m.content }))
+
+    try {
+      await chatApi.chatStream(
+        content,
+        documentIds,
+        history,
+        (chunk) => {
+          setConversations((current) =>
+            current.map((chat) => {
+              if (chat.id === activeId) {
+                return {
+                  ...chat,
+                  messages: chat.messages.map((msg) =>
+                    msg.id === assistantMsgId ? { ...msg, content: msg.content + chunk } : msg
+                  )
+                }
+              }
+              return chat
+            })
+          )
+        },
+        (citations) => {
+          setConversations((current) =>
+            current.map((chat) => {
+              if (chat.id === activeId) {
+                return {
+                  ...chat,
+                  messages: chat.messages.map((msg) =>
+                    msg.id === assistantMsgId ? { ...msg, citations } : msg
+                  )
+                }
+              }
+              return chat
+            })
+          )
+        }
+      )
+    } catch (err) {
       setConversations((current) =>
         current.map((chat) => {
           if (chat.id === activeId) {
-            const assistantMsg = {
-              id: crypto.randomUUID(),
-              role: 'assistant',
-              content: `This is a mock local RAG response to your query: "${content}". Once Phase 2 is connected, Ollama will generate grounded answers citing specific chunks here.`
-            }
             return {
               ...chat,
-              messages: [...chat.messages, assistantMsg]
+              messages: chat.messages.map((msg) =>
+                msg.id === assistantMsgId
+                  ? { ...msg, content: `Error: ${err.message || 'Could not get response from local AI.'}` }
+                  : msg
+              )
             }
           }
           return chat
         })
       )
-    }, 600)
+    }
   }
 
   const value = useMemo(

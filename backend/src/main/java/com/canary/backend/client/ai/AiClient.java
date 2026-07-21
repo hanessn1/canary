@@ -1,9 +1,22 @@
 package com.canary.backend.client.ai;
 
+import com.canary.backend.dto.chat.ChatRequest;
+import com.canary.backend.dto.chat.ChatResponse;
+
+import java.util.UUID;
+import java.util.function.Consumer;
+
 /**
- * Boundary for future communication with the top-level AI module or a local AI runtime.
- *
- * <p>No implementation belongs in the backend foundation. Future implementations may include
- * OllamaClient or LocalAiClient without leaking provider types into controllers or services.
+ * Boundary for the top-level AI module. Implementations such as local or Ollama clients belong in
+ * future work and must not leak AI-provider concerns into the backend domain.
  */
-public interface AiClient {}
+public interface AiClient {
+
+	void indexDocument(UUID documentId, String filename);
+
+	void deleteDocumentIndex(UUID documentId);
+
+	ChatResponse chat(ChatRequest request);
+
+	void chatStream(ChatRequest request, Consumer<String> chunkConsumer);
+}

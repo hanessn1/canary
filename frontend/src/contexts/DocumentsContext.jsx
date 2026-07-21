@@ -29,6 +29,25 @@ export function DocumentsProvider({ children }) {
 
   useEffect(() => { refresh() }, [refresh])
 
+  useEffect(() => {
+    const hasTransientDocs = documents.some(
+      (doc) => doc.status === 'UPLOADED' || doc.status === 'PROCESSING'
+    )
+
+    if (!hasTransientDocs) return
+
+    const interval = setInterval(async () => {
+      try {
+        const list = await documentApi.list()
+        setDocuments(list)
+      } catch (err) {
+        console.error('Failed to poll document status list:', err)
+      }
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [documents])
+
   const upload = useCallback(async (file) => {
     const uploadId = crypto.randomUUID()
     const extension = getExtension(file.name)

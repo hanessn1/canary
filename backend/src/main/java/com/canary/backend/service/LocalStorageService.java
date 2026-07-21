@@ -11,6 +11,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
@@ -18,12 +20,20 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class LocalStorageService implements StorageService {
+	private static final Logger LOGGER = LoggerFactory.getLogger(LocalStorageService.class);
 	private static final int BUFFER_SIZE = 8192;
 
 	private final Path uploadDirectory;
 
 	public LocalStorageService(DocumentStorageProperties properties) {
-		this.uploadDirectory = properties.uploadDirectory().toAbsolutePath().normalize();
+		Path dir = properties.uploadDirectory().toAbsolutePath().normalize();
+		// If running from backend/ subdirectory, shift storage up to the root level
+		String backendPattern = "backend" + java.io.File.separator + "storage";
+		if (dir.toString().contains(backendPattern)) {
+			dir = Path.of(dir.toString().replace(backendPattern, "storage")).normalize();
+		}
+		this.uploadDirectory = dir;
+		LOGGER.info("Configured local storage upload directory: {}", this.uploadDirectory);
 	}
 
 	@Override

@@ -55,6 +55,57 @@ export const documentApi = {
   },
 }
 
+export const chatApi = {
+  chat: (query, documentIds, history = []) => request('/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, documentIds, history })
+  }),
+  chatStream: async (query, documentIds, history = [], onChunk, onCitations) => {
+    const response = await fetch(`${API_BASE}/chat/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, documentIds, history })
+    })
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null)
+      throw new ApiError(payload?.error?.message ?? 'Streaming request failed.', response.status)
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+
+      for (const line of lines) {
+        if (!line.trim()) continue
+
+        if (line.startsWith('data:')) {
+          try {
+            const data = JSON.parse(line.slice(5).trim())
+            if (data.citations) {
+              onCitations(data.citations)
+            }
+            if (data.content) {
+              onChunk(data.content)
+            }
+          } catch (e) {
+            console.error('Failed to parse SSE JSON:', line, e)
+          }
+        }
+      }
+    }
+  }
+}
+
 export async function getApiHealth() {
   const response = await fetch(`${API_BASE}/health`)
   const payload = await response.json().catch(() => null)

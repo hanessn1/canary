@@ -12,9 +12,9 @@ export default function Uploader({ fileInputRef }) {
 
   return (
     <section>
-      <div className={`${styles.dropzone} ${isDragging ? styles.dragging : ''}`} onDragEnter={(event) => { event.preventDefault(); setIsDragging(true) }} onDragOver={(event) => event.preventDefault()} onDragLeave={() => setIsDragging(false)} onDrop={(event) => { event.preventDefault(); setIsDragging(false); processFiles(event.dataTransfer.files) }}>
+      <div className={`${styles.dropzone} ${isDragging ? styles.dragging : ''}`} onClick={() => inputRef.current?.click()} onDragEnter={(event) => { event.preventDefault(); setIsDragging(true) }} onDragOver={(event) => event.preventDefault()} onDragLeave={() => setIsDragging(false)} onDrop={(event) => { event.preventDefault(); setIsDragging(false); processFiles(event.dataTransfer.files) }}>
         <UploadCloud size={35} />
-        <h2>Drop files here or <button onClick={() => inputRef.current?.click()}>browse</button></h2>
+        <h2>Drop files here or <span className={styles.browse}>browse</span></h2>
         <p>PDF, DOCX, Markdown, TXT · max 10 MB</p>
         <input ref={inputRef} type="file" accept=".pdf,.docx,.md,.txt,application/pdf,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={(event) => { processFiles(event.target.files); event.target.value = '' }} multiple hidden />
       </div>

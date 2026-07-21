@@ -4,9 +4,11 @@ import com.canary.backend.domain.document.Document;
 import com.canary.backend.domain.document.DocumentStatus;
 import com.canary.backend.exception.DocumentNotFoundException;
 import com.canary.backend.exception.DocumentStorageException;
+import com.canary.backend.client.ai.AiClient;
 import com.canary.backend.repository.DocumentRepository;
 import com.canary.backend.validation.document.DocumentUploadValidator;
 import com.canary.backend.validation.document.ValidatedDocumentUpload;
+
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Instant;
@@ -14,6 +16,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -30,13 +33,15 @@ public class DocumentService {
 	private final StorageService storageService;
 	private final DocumentUploadValidator uploadValidator;
 	private final Clock clock;
+	private final AiClient aiClient;
 
 	public DocumentService(DocumentRepository documentRepository, StorageService storageService,
-			DocumentUploadValidator uploadValidator, Clock clock) {
+						   DocumentUploadValidator uploadValidator, Clock clock, AiClient aiClient) {
 		this.documentRepository = documentRepository;
 		this.storageService = storageService;
 		this.uploadValidator = uploadValidator;
 		this.clock = clock;
+		this.aiClient = aiClient;
 	}
 
 	public Document upload(MultipartFile file) {
@@ -44,17 +49,17 @@ public class DocumentService {
 		UUID documentId = UUID.randomUUID();
 		StoredFile storedFile = store(documentId, upload, file);
 		Document document = new Document(documentId, storedFile.filename(), upload.originalFilename(),
-				upload.contentType(), storedFile.sizeBytes(), Instant.now(clock), DocumentStatus.UPLOADED,
-				storedFile.checksum(), null, Map.of());
+			upload.contentType(), storedFile.sizeBytes(), Instant.now(clock), DocumentStatus.UPLOADED,
+			storedFile.checksum(), null, Map.of());
 
 		try {
 			Document savedDocument = documentRepository.save(document);
 			LOGGER.info(
-					"Document uploaded: documentId={}, originalFilename={}, contentType={}, sizeBytes={}, status={}",
-					savedDocument.id(), savedDocument.originalFilename(), savedDocument.contentType(),
-					savedDocument.sizeBytes(), savedDocument.status());
+				"Document uploaded: documentId={}, originalFilename={}, contentType={}, sizeBytes={}, status={}",
+				savedDocument.id(), savedDocument.originalFilename(), savedDocument.contentType(),
+				savedDocument.sizeBytes(), savedDocument.status());
 
-			// Future: publish a document-uploaded event to trigger asynchronous parsing and RAG processing.
+			aiClient.indexDocument(savedDocument.id(), savedDocument.filename());
 			return savedDocument;
 		} catch (RuntimeException exception) {
 			deleteStoredFileAfterFailedPersistence(storedFile.filename());
@@ -80,6 +85,7 @@ public class DocumentService {
 		} catch (IOException exception) {
 			throw new DocumentStorageException("Unable to remove the document from temporary storage", exception);
 		}
+		aiClient.deleteDocumentIndex(documentId);
 		return documentRepository.deleteById(documentId).orElseThrow(() -> new DocumentNotFoundException(documentId));
 	}
 

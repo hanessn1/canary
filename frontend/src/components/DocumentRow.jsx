@@ -1,4 +1,4 @@
-import { FileCode2, FileText, MoreVertical, Trash2 } from 'lucide-react'
+import { FileCode2, FileText, Trash2 } from 'lucide-react'
 import StatusBadge from './ui/StatusBadge'
 import styles from './DocumentRow.module.css'
 
@@ -10,12 +10,11 @@ export default function DocumentRow({ document, onDelete }) {
   const isMarkdown = document.originalFilename.toLowerCase().endsWith('.md')
   const Icon = isMarkdown ? FileCode2 : FileText
   return <tr>
-    <td><input type="checkbox" aria-label={`Select ${document.originalFilename}`} /></td>
     <td><span className={styles.file}><span className={styles.fileIcon}><Icon size={19} /></span><span><strong>{document.originalFilename}</strong><small>{document.checksum.slice(0, 12)}…</small></span></span></td>
     <td>{extension(document.originalFilename)}</td>
     <td>{formatSize(document.sizeBytes)}</td>
     <td>{formatter.format(new Date(document.uploadedAt))}</td>
     <td><StatusBadge status={document.status} /></td>
-    <td><div className={styles.actions}><button title="View details" aria-label={`View details for ${document.originalFilename}`}><MoreVertical size={18} /></button><button title="Delete document" aria-label={`Delete ${document.originalFilename}`} onClick={() => onDelete(document)}><Trash2 size={17} /></button></div></td>
+    <td><div className={styles.actions}><button title="Delete document" aria-label={`Delete ${document.originalFilename}`} onClick={() => onDelete(document)}><Trash2 size={17} /></button></div></td>
   </tr>
 }

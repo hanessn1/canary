@@ -10,3 +10,9 @@
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Python caches
+__pycache__
+
+# Local RAG storage
+storage/
