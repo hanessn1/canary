@@ -1,0 +1,71 @@
+name: Canary CI
+
+on:
+    push:
+        branches: [ master ]
+    pull_request:
+        branches: [ master ]
+
+jobs:
+    backend:
+        name: Backend (Java)
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Checkout Code
+                uses: actions/checkout@v4
+
+            -   name: Set up JDK 25
+                uses: actions/setup-java@v4
+                with:
+                    java-version: '25'
+                    distribution: 'temurin'
+                    cache: 'maven'
+
+            -   name: Run Backend Tests
+                run: mvn clean test -f backend/pom.xml
+
+    ai:
+        name: AI Service (Python)
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Checkout Code
+                uses: actions/checkout@v4
+
+            -   name: Set up Python 3.11
+                uses: actions/setup-python@v5
+                with:
+                    python-version: '3.11'
+                    cache: 'pip'
+                    cache-dependency-path: ai/requirements.txt
+
+            -   name: Install Dependencies
+                run: |
+                    python -m pip install --upgrade pip
+                    pip install -r ai/requirements.txt
+
+            -   name: Run AI Tests
+                run: pytest ai/tests/
+                env:
+                    PYTHONPATH: .
+
+    frontend:
+        name: Frontend (React)
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Checkout Code
+                uses: actions/checkout@v4
+
+            -   name: Set up Node.js 20
+                uses: actions/setup-node@v4
+                with:
+                    node-version: '20'
+                    cache: 'npm'
+                    cache-dependency-path: frontend/package-lock.json
+
+            -   name: Install Dependencies
+                run: npm ci
+                working-directory: frontend
+
+            -   name: Build Frontend
+                run: npm run build
+                working-directory: frontend

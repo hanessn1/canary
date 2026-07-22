@@ -137,6 +137,24 @@ public class HttpAiClient implements AiClient {
 		}
 	}
 
+	@Override
+	public java.util.List<String> getModels() {
+		try {
+			java.util.Map<String, Object> response = restClient.get()
+				.uri("/api/v1/models")
+				.retrieve()
+				.body(new org.springframework.core.ParameterizedTypeReference<java.util.Map<String, Object>>() {});
+			if (response != null && ("success".equals(response.get("status")) || "fallback".equals(response.get("status")))) {
+				return (java.util.List<String>) response.get("models");
+			}
+		} catch (Exception e) {
+			LOGGER.warn("Failed to fetch models from AI service: {}", e.getMessage());
+		}
+		return java.util.List.of("qwen2.5:3b", "nomic-embed-text");
+	}
+
+
+
 	private void updateDocumentStatus(UUID documentId, DocumentStatus status) {
 		documentRepository.findById(documentId).ifPresent(doc -> {
 			Document updatedDoc = new Document(

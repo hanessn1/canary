@@ -112,3 +112,10 @@ export async function getApiHealth() {
   if (!response.ok || !payload?.success) throw new ApiError('Canary API is unavailable.', response.status)
   return payload.data
 }
+
+export async function getModels() {
+  const response = await fetch(`${API_BASE}/chat/models`)
+  const payload = await response.json().catch(() => null)
+  if (!response.ok || !payload?.success) throw new ApiError('Failed to fetch models.', response.status)
+  return payload.data
+}

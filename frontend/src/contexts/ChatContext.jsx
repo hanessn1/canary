@@ -6,31 +6,8 @@ const ChatContext = createContext(null)
 const initialConversations = [
   {
     id: 'chat-1',
-    title: 'Research strategy',
-    messages: [
-      { id: 'msg-1', role: 'assistant', content: 'Chat is ready for the local AI pipeline. Upload and process documents to begin grounded conversations.' }
-    ]
-  },
-  {
-    id: 'chat-2',
-    title: 'Architecture review',
-    messages: [
-      { id: 'msg-2', role: 'assistant', content: "Let's review the architecture. This conversation will load specific context from your files." }
-    ]
-  },
-  {
-    id: 'chat-3',
-    title: 'Security audit prep',
-    messages: [
-      { id: 'msg-3', role: 'assistant', content: 'Security audit context ready. Upload compliance reports to start the checklist.' }
-    ]
-  },
-  {
-    id: 'chat-4',
-    title: 'Document ingestion plan',
-    messages: [
-      { id: 'msg-4', role: 'assistant', content: 'We can discuss Phase 2 and how the Python service processes raw file uploads.' }
-    ]
+    title: 'New chat',
+    messages: []
   }
 ]
 
@@ -51,9 +28,7 @@ export function ChatProvider({ children }) {
     const newChat = {
       id: newId,
       title: `New chat ${conversations.length + 1}`,
-      messages: [
-        { id: `msg-${crypto.randomUUID()}`, role: 'assistant', content: 'New grounded chat started. How can I help you analyze your documents?' }
-      ]
+      messages: []
     }
     setConversations((current) => [newChat, ...current])
     setActiveId(newId)
@@ -63,28 +38,21 @@ export function ChatProvider({ children }) {
     setConversations((current) => {
       const remaining = current.filter((c) => c.id !== id)
       if (remaining.length === 0) {
+        const newId = `chat-${crypto.randomUUID()}`
+        setActiveId(newId)
         return [
           {
-            id: `chat-${crypto.randomUUID()}`,
+            id: newId,
             title: 'New chat',
-            messages: [
-              { id: `msg-${crypto.randomUUID()}`, role: 'assistant', content: 'New grounded chat started. How can I help you analyze your documents?' }
-            ]
+            messages: []
           }
         ]
       }
+      if (activeId === id) {
+        setActiveId(remaining[0].id)
+      }
       return remaining
     })
-
-    if (activeId === id) {
-      setConversations((current) => {
-        const remaining = current.filter((c) => c.id !== id)
-        if (remaining.length > 0) {
-          setActiveId(remaining[0].id)
-        }
-        return current
-      })
-    }
   }
 
   const sendMessage = async (content, documentIds = []) => {
@@ -184,6 +152,14 @@ export function ChatProvider({ children }) {
     }
   }
 
+  const updateConversationTitle = (id, newTitle) => {
+    setConversations((current) =>
+      current.map((chat) =>
+        chat.id === id ? { ...chat, title: newTitle } : chat
+      )
+    )
+  }
+
   const value = useMemo(
     () => ({
       conversations,
@@ -191,7 +167,8 @@ export function ChatProvider({ children }) {
       selectConversation,
       startNewChat,
       deleteConversation,
-      sendMessage
+      sendMessage,
+      updateConversationTitle
     }),
     [conversations, activeConversation, activeId]
   )

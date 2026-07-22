@@ -4,7 +4,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional
 
-from ai.config import UPLOAD_DIR
+import httpx
+from ai.config import UPLOAD_DIR, OLLAMA_URL
 from ai.services.parser import parse_document
 from ai.services.chunker import chunk_pages
 from ai.services.embedder import Embedder
@@ -16,7 +17,7 @@ from ai.services.chat import ChatService
 embedder = Embedder()
 vector_store = VectorStore()
 retriever = Retriever(embedder, vector_store)
-chat_service = ChatService()
+chat_service = ChatService(retriever)
 
 
 @asynccontextmanager
@@ -92,6 +93,29 @@ async def retrieve_chunks(payload: RetrieveRequest):
 		}
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=f"Retrieval failed: {str(e)}")
+
+
+@app.get("/api/v1/models")
+async def get_ollama_models():
+	try:
+		async with httpx.AsyncClient(timeout=5.0) as client:
+			resp = await client.get(f"{OLLAMA_URL}/api/tags")
+			if resp.status_code == 200:
+				data = resp.json()
+				# Return all tags
+				tags = [m["name"] for m in data.get("models", [])]
+				if tags:
+					return {
+						"status": "success",
+						"models": tags
+					}
+	except Exception:
+		pass
+	# Fallback list if Ollama is offline or has no tags
+	return {
+		"status": "fallback",
+		"models": ["qwen2.5:3b", "nomic-embed-text"]
+	}
 
 
 @app.post("/api/v1/chat")

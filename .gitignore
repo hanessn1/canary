@@ -15,4 +15,10 @@ Thumbs.db
 __pycache__
 
 # Local RAG storage
-storage/
+storage
+
+# Python Virtual Environment
+.venv
+
+# Pytest caches
+.pytest_cache

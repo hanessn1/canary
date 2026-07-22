@@ -19,4 +19,6 @@ public interface AiClient {
 	ChatResponse chat(ChatRequest request);
 
 	void chatStream(ChatRequest request, Consumer<String> chunkConsumer);
+
+	java.util.List<String> getModels();
 }

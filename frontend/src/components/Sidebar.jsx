@@ -1,7 +1,9 @@
-import { Activity, Bird, Bot, BookOpen, MessageSquare, Settings, Plus, Trash2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Activity, Bird, Bot, BookOpen, MessageSquare, Settings, Plus, Trash2, Sun, Moon } from 'lucide-react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import useHealthCheck from '../hooks/useHealthCheck'
 import { useChat } from '../contexts/ChatContext'
+import { getModels } from '../services/api'
 import styles from './Sidebar.module.css'
 
 const navigation = [
@@ -10,10 +12,34 @@ const navigation = [
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ theme, setTheme }) {
   const apiStatus = useHealthCheck()
   const { conversations, selectConversation, startNewChat, deleteConversation } = useChat()
   const navigate = useNavigate()
+  const [ollamaOnline, setOllamaOnline] = useState(false)
+  const [ollamaStatus, setOllamaStatus] = useState('Checking')
+
+  useEffect(() => {
+    if (apiStatus === 'online') {
+      getModels()
+        .then((models) => {
+          if (models && models.length > 0) {
+            setOllamaOnline(true)
+            setOllamaStatus('Online')
+          } else {
+            setOllamaOnline(false)
+            setOllamaStatus('Offline')
+          }
+        })
+        .catch(() => {
+          setOllamaOnline(false)
+          setOllamaStatus('Offline')
+        })
+    } else if (apiStatus === 'offline') {
+      setOllamaOnline(false)
+      setOllamaStatus('Offline')
+    }
+  }, [apiStatus])
 
   const handleChatClick = (id) => {
     selectConversation(id)
@@ -60,7 +86,7 @@ export default function Sidebar() {
       <div className={styles.health}>
         <p className={styles.sectionLabel}><Activity size={14} /> System health</p>
         <HealthLine label="API" value={apiStatus === 'checking' ? 'Checking' : apiStatus === 'online' ? 'Online' : 'Offline'} online={apiStatus === 'online'} />
-        <HealthLine label="Ollama" value="Not configured" online={false} icon={<Bot size={15} />} />
+        <HealthLine label="Ollama" value={ollamaStatus} online={ollamaOnline} />
       </div>
     </aside>
   )
