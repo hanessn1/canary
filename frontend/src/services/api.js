@@ -61,11 +61,18 @@ export const chatApi = {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, documentIds, history })
   }),
-  chatStream: async (query, documentIds, history = [], onChunk, onCitations) => {
+  chatStream: async (query, documentIds, history = [], temperature, topK, similarityThreshold, onChunk, onCitations) => {
     const response = await fetch(`${API_BASE}/chat/stream`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, documentIds, history })
+      body: JSON.stringify({ 
+        query, 
+        documentIds, 
+        history, 
+        temperature, 
+        topK, 
+        similarityThreshold 
+      })
     })
 
     if (!response.ok) {

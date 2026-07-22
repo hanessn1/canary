@@ -54,6 +54,9 @@ class ChatRequest(BaseModel):
 	document_ids: List[str]
 	history: Optional[List[Message]] = []
 	stream: Optional[bool] = True
+	temperature: Optional[float] = 0.2
+	top_k: Optional[int] = 6
+	similarity_threshold: Optional[float] = 0.78
 
 
 @app.post("/api/v1/index")
@@ -126,10 +129,21 @@ async def chat_with_docs(payload: ChatRequest):
 
 		chunks = []
 		if needs_retrieval and payload.document_ids:
-			chunks = await retriever.retrieve(payload.query, payload.document_ids, top_k=5)
+			chunks = await retriever.retrieve(
+				payload.query,
+				payload.document_ids,
+				top_k=payload.top_k,
+				similarity_threshold=payload.similarity_threshold
+			)
 
 		hist = [{"role": msg.role, "content": msg.content} for msg in payload.history]
-		response = await chat_service.generate_response(payload.query, chunks, hist, payload.stream)
+		response = await chat_service.generate_response(
+			payload.query,
+			chunks,
+			hist,
+			payload.stream,
+			temperature=payload.temperature
+		)
 
 		if payload.stream:
 			return StreamingResponse(response, media_type="text/event-stream")

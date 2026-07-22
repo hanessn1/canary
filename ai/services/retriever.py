@@ -11,7 +11,7 @@ class Retriever:
 		self.embedder = embedder
 		self.vector_store = vector_store
 
-	async def retrieve(self, query: str, document_ids: List[str], top_k: int = 5) -> List[Dict[str, Any]]:
+	async def retrieve(self, query: str, document_ids: List[str], top_k: int = 5, similarity_threshold: float = 0.0) -> List[Dict[str, Any]]:
 		if not document_ids:
 			return []
 
@@ -36,6 +36,8 @@ class Retriever:
 
 			for score, idx in zip(scores[0], indices[0]):
 				if idx < 0 or idx >= len(chunks):
+					continue
+				if float(score) < similarity_threshold:
 					continue
 				chunk = chunks[idx]
 				all_candidate_chunks.append({

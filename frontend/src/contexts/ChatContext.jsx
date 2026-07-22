@@ -14,6 +14,9 @@ const initialConversations = [
 export function ChatProvider({ children }) {
   const [conversations, setConversations] = useState(initialConversations)
   const [activeId, setActiveId] = useState('chat-1')
+  const [temperature, setTemperature] = useState(0.2)
+  const [topK, setTopK] = useState(6)
+  const [similarityThreshold, setSimilarityThreshold] = useState(0.78)
 
   const activeConversation = useMemo(() => {
     return conversations.find((c) => c.id === activeId) || conversations[0]
@@ -102,6 +105,9 @@ export function ChatProvider({ children }) {
         content,
         documentIds,
         history,
+        temperature,
+        topK,
+        similarityThreshold,
         (chunk) => {
           setConversations((current) =>
             current.map((chat) => {
@@ -168,9 +174,15 @@ export function ChatProvider({ children }) {
       startNewChat,
       deleteConversation,
       sendMessage,
-      updateConversationTitle
+      updateConversationTitle,
+      temperature,
+      setTemperature,
+      topK,
+      setTopK,
+      similarityThreshold,
+      setSimilarityThreshold
     }),
-    [conversations, activeConversation, activeId]
+    [conversations, activeConversation, activeId, temperature, topK, similarityThreshold]
   )
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>

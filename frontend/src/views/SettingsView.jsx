@@ -2,10 +2,20 @@ import { useState, useEffect, useRef } from 'react'
 import { Server, SlidersHorizontal, ChevronDown } from 'lucide-react'
 import useHealthCheck from '../hooks/useHealthCheck'
 import { getModels } from '../services/api'
+import { useChat } from '../contexts/ChatContext'
 import styles from './SettingsView.module.css'
 
 export default function SettingsView() {
   const apiStatus = useHealthCheck()
+  const { 
+    temperature, 
+    setTemperature, 
+    topK, 
+    setTopK, 
+    similarityThreshold, 
+    setSimilarityThreshold 
+  } = useChat()
+
   const [availableModels, setAvailableModels] = useState(['qwen2.5:3b', 'nomic-embed-text'])
   const [embeddingModel, setEmbeddingModel] = useState('nomic-embed-text')
   const [llmModel, setLlmModel] = useState('qwen2.5:3b')
@@ -90,10 +100,31 @@ export default function SettingsView() {
         </Panel>
         
         <Panel title="RAG parameters" icon={<SlidersHorizontal size={19} />}>
-          <p className={styles.muted}>These controls are visual placeholders until the AI module exposes runtime configuration.</p>
-          <Range label="Temperature" value="0.2" />
-          <Range label="Top-K chunks" value="6" />
-          <Range label="Similarity threshold" value="0.78" />
+          <p className={styles.muted}>Configure temperature, search range, and similarity margins for responses.</p>
+          <Range 
+            label="Temperature" 
+            value={temperature} 
+            onChange={setTemperature} 
+            min={0} 
+            max={1} 
+            step={0.05} 
+          />
+          <Range 
+            label="Top-K chunks" 
+            value={topK} 
+            onChange={setTopK} 
+            min={1} 
+            max={20} 
+            step={1} 
+          />
+          <Range 
+            label="Similarity threshold" 
+            value={similarityThreshold} 
+            onChange={setSimilarityThreshold} 
+            min={0} 
+            max={1} 
+            step={0.02} 
+          />
         </Panel>
       </section>
     </div>
@@ -111,7 +142,22 @@ function Status({ label, value, healthy }) {
     </div>
   ) 
 }
-function Range({ label, value }) { return <label className={styles.range}>{label}<span>{value}</span><input type="range" min="0" max="100" defaultValue="45" disabled /></label> }
+function Range({ label, value, onChange, min = 0, max = 1, step = 0.01 }) { 
+  return (
+    <label className={styles.range}>
+      {label}
+      <span>{value}</span>
+      <input 
+        type="range" 
+        min={min} 
+        max={max} 
+        step={step} 
+        value={value} 
+        onChange={(e) => onChange(parseFloat(e.target.value))} 
+      />
+    </label>
+  ) 
+}
 
 function CustomSelect({ value, onChange, options }) {
   const [isOpen, setIsOpen] = useState(false)

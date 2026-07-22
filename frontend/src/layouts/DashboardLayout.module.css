@@ -6,7 +6,7 @@
 .workspaceContent { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; }
 .resizer { width: 4px; cursor: col-resize; background: transparent; transition: background 150ms ease; z-index: 10; }
 .resizer:hover, .resizerActive { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
-@media (max-width: 820px) { 
+@media (max-width: 820px) {
   .appShell { grid-template-columns: 1fr !important; }
   .resizer { display: none; }
   .header { padding: 0 20px; }
@@ -33,6 +33,156 @@
   background: var(--cyan-soft);
 }
 
-.profileIcon {
+/* ── Profile button ─────────────────────────────────────────────────────────── */
+
+.profileWrapper {
+  position: relative;
+}
+
+.profileBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
   color: var(--text-muted);
+  cursor: pointer;
+  transition: all 140ms ease;
+  padding: 0;
+}
+
+.profileBtn:hover {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  background: var(--cyan-soft);
+}
+
+.profileInitial {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--cyan);
+  line-height: 1;
+}
+
+/* ── Profile card popup ─────────────────────────────────────────────────────── */
+
+.profileCard {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 240px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 40%), 0 0 0 1px rgb(6 182 212 / 10%);
+  padding: 16px;
+  z-index: 100;
+  animation: popIn 160ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.profileCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.profileCardClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 0;
+  transition: all 120ms ease;
+}
+
+.profileCardClose:hover {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.profileCardAvatar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.avatarCircle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1.5px solid rgb(6 182 212 / 35%);
+  background: var(--cyan-soft);
+  color: var(--cyan);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.profileCardLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.profileCardInput {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.87rem;
+  outline: none;
+  transition: border-color 120ms ease;
+  caret-color: var(--cyan);
+  box-sizing: border-box;
+}
+
+.profileCardInput:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 2px rgb(6 182 212 / 15%);
+}
+
+.profileCardSave {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-radius: 7px;
+  background: var(--cyan);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.profileCardSave:hover {
+  background: var(--cyan-bright);
+  box-shadow: 0 0 12px rgb(6 182 212 / 45%);
 }

@@ -72,3 +72,41 @@ button { cursor: pointer; }
 a { color: inherit; text-decoration: none; }
 
 ::selection { background: rgb(6 182 212 / 35%); }
+
+/* Global custom neon scrollbars — auto-hide when idle */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+  transition: background 400ms ease, box-shadow 400ms ease;
+}
+
+/* Show neon glow when the scrollable container is being scrolled */
+*:hover::-webkit-scrollbar-thumb,
+*:active::-webkit-scrollbar-thumb {
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cyan-bright) !important;
+  box-shadow: 0 0 12px var(--cyan-bright) !important;
+}
+
+/* Firefox — thin, hidden by default */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover {
+  scrollbar-color: var(--cyan) transparent;
+}

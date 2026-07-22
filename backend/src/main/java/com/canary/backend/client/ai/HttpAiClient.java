@@ -9,6 +9,7 @@ import com.canary.backend.repository.DocumentRepository;
 
 import java.net.http.HttpClient;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -91,15 +92,25 @@ public class HttpAiClient implements AiClient {
 	public ChatResponse chat(ChatRequest request) {
 		LOGGER.info("Sending chat request to AI service: query='{}', documents={}", request.query(), request.documentIds());
 		try {
+			Map<String, Object> body = new HashMap<>();
+			body.put("query", request.query());
+			body.put("document_ids", request.documentIds().stream().map(UUID::toString).toList());
+			body.put("history", request.history());
+			body.put("stream", false);
+			if (request.temperature() != null) {
+				body.put("temperature", request.temperature());
+			}
+			if (request.topK() != null) {
+				body.put("top_k", request.topK());
+			}
+			if (request.similarityThreshold() != null) {
+				body.put("similarity_threshold", request.similarityThreshold());
+			}
+
 			return restClient.post()
 				.uri("/api/v1/chat")
 				.contentType(MediaType.APPLICATION_JSON)
-				.body(Map.of(
-					"query", request.query(),
-					"document_ids", request.documentIds().stream().map(UUID::toString).toList(),
-					"history", request.history(),
-					"stream", false
-				))
+				.body(body)
 				.retrieve()
 				.body(ChatResponse.class);
 		} catch (Exception e) {
@@ -112,15 +123,25 @@ public class HttpAiClient implements AiClient {
 	public void chatStream(ChatRequest request, Consumer<String> chunkConsumer) {
 		LOGGER.info("Sending streaming chat request to AI service: query='{}', documents={}", request.query(), request.documentIds());
 		try {
+			Map<String, Object> body = new HashMap<>();
+			body.put("query", request.query());
+			body.put("document_ids", request.documentIds().stream().map(UUID::toString).toList());
+			body.put("history", request.history());
+			body.put("stream", true);
+			if (request.temperature() != null) {
+				body.put("temperature", request.temperature());
+			}
+			if (request.topK() != null) {
+				body.put("top_k", request.topK());
+			}
+			if (request.similarityThreshold() != null) {
+				body.put("similarity_threshold", request.similarityThreshold());
+			}
+
 			restClient.post()
 				.uri("/api/v1/chat")
 				.contentType(MediaType.APPLICATION_JSON)
-				.body(Map.of(
-					"query", request.query(),
-					"document_ids", request.documentIds().stream().map(UUID::toString).toList(),
-					"history", request.history(),
-					"stream", true
-				))
+				.body(body)
 				.exchange((req, res) -> {
 					try (java.io.BufferedReader reader = new java.io.BufferedReader(
 							new java.io.InputStreamReader(res.getBody(), java.nio.charset.StandardCharsets.UTF_8))) {

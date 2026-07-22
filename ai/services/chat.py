@@ -29,7 +29,7 @@ class ChatService:
 		else:
 			raise ValueError(f"Unknown tool: {name}")
 
-	async def generate_response(self, query: str, context_chunks: List[Dict[str, Any]], history: List[Dict[str, str]], stream: bool = False, tools: List[Dict[str, Any]] = TOOL_SCHEMAS):
+	async def generate_response(self, query: str, context_chunks: List[Dict[str, Any]], history: List[Dict[str, str]], stream: bool = False, tools: List[Dict[str, Any]] = TOOL_SCHEMAS, temperature: float = 0.2):
 		if not context_chunks:
 			system_prompt = (
 				"You are Canary, a local-first AI document intelligence assistant. "
@@ -57,15 +57,18 @@ class ChatService:
 		messages.append({"role": "user", "content": query})
 
 		if stream:
-			return self._stream_agent_loop(messages, context_chunks, tools)
+			return self._stream_agent_loop(messages, context_chunks, tools, temperature)
 		else:
-			return await self._blocking_agent_loop(messages, context_chunks, tools)
+			return await self._blocking_agent_loop(messages, context_chunks, tools, temperature)
 
-	async def _blocking_agent_loop(self, messages: List[Dict[str, Any]], context_chunks: List[Dict[str, Any]], tools: List[Dict[str, Any]]) -> Dict[str, Any]:
+	async def _blocking_agent_loop(self, messages: List[Dict[str, Any]], context_chunks: List[Dict[str, Any]], tools: List[Dict[str, Any]], temperature: float = 0.2) -> Dict[str, Any]:
 		payload = {
 			"model": self.model,
 			"messages": messages,
-			"stream": False
+			"stream": False,
+			"options": {
+				"temperature": temperature
+			}
 		}
 		if tools:
 			payload["tools"] = tools
@@ -101,11 +104,14 @@ class ChatService:
 			"citations": context_chunks
 		}
 
-	async def _stream_agent_loop(self, messages: List[Dict[str, Any]], context_chunks: List[Dict[str, Any]], tools: List[Dict[str, Any]]) -> AsyncIterator[str]:
+	async def _stream_agent_loop(self, messages: List[Dict[str, Any]], context_chunks: List[Dict[str, Any]], tools: List[Dict[str, Any]], temperature: float = 0.2) -> AsyncIterator[str]:
 		payload = {
 			"model": self.model,
 			"messages": messages,
-			"stream": True
+			"stream": True,
+			"options": {
+				"temperature": temperature
+			}
 		}
 		if tools:
 			payload["tools"] = tools
