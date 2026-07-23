@@ -14,18 +14,16 @@ def test_get_system_time():
 
 
 def test_list_documents_missing(tmp_path):
-	with patch("ai.services.tools.BASE_DIR", tmp_path):
+	with patch("ai.services.tools.STORAGE_DIR", tmp_path):
 		assert list_documents() == []
 
 
 def test_list_documents_present(tmp_path):
-	storage_dir = tmp_path / "storage"
-	storage_dir.mkdir()
-	docs_file = storage_dir / "documents.json"
+	docs_file = tmp_path / "documents.json"
 	mock_data = [{"id": "123", "originalFilename": "test.txt"}]
 	docs_file.write_text(json.dumps(mock_data), encoding="utf-8")
 
-	with patch("ai.services.tools.BASE_DIR", tmp_path):
+	with patch("ai.services.tools.STORAGE_DIR", tmp_path):
 		result = list_documents()
 		assert len(result) == 1
 		assert result[0]["originalFilename"] == "test.txt"
