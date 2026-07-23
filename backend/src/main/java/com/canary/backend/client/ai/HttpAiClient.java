@@ -94,8 +94,8 @@ public class HttpAiClient implements AiClient {
 		try {
 			Map<String, Object> body = new HashMap<>();
 			body.put("query", request.query());
-			body.put("document_ids", request.documentIds().stream().map(UUID::toString).toList());
-			body.put("history", request.history());
+			body.put("document_ids", request.documentIds() != null ? request.documentIds().stream().map(UUID::toString).toList() : java.util.List.of());
+			body.put("history", request.history() != null ? request.history() : java.util.List.of());
 			body.put("stream", false);
 			if (request.temperature() != null) {
 				body.put("temperature", request.temperature());
@@ -125,8 +125,8 @@ public class HttpAiClient implements AiClient {
 		try {
 			Map<String, Object> body = new HashMap<>();
 			body.put("query", request.query());
-			body.put("document_ids", request.documentIds().stream().map(UUID::toString).toList());
-			body.put("history", request.history());
+			body.put("document_ids", request.documentIds() != null ? request.documentIds().stream().map(UUID::toString).toList() : java.util.List.of());
+			body.put("history", request.history() != null ? request.history() : java.util.List.of());
 			body.put("stream", true);
 			if (request.temperature() != null) {
 				body.put("temperature", request.temperature());
