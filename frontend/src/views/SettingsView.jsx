@@ -13,12 +13,14 @@ export default function SettingsView() {
     topK, 
     setTopK, 
     similarityThreshold, 
-    setSimilarityThreshold 
+    setSimilarityThreshold,
+    embeddingModel,
+    setEmbeddingModel,
+    llmModel,
+    setLlmModel
   } = useChat()
 
   const [availableModels, setAvailableModels] = useState(['qwen2.5:3b', 'nomic-embed-text'])
-  const [embeddingModel, setEmbeddingModel] = useState('nomic-embed-text')
-  const [llmModel, setLlmModel] = useState('qwen2.5:3b')
   const [ollamaStatus, setOllamaStatus] = useState('Checking')
   const [ollamaHealthy, setOllamaHealthy] = useState(false)
 
@@ -30,19 +32,23 @@ export default function SettingsView() {
           setOllamaStatus('Online')
           setOllamaHealthy(true)
           
-          // Categorize and pick default embedding model
-          const embedMList = models.filter(m =>
-            m.toLowerCase().includes('embed') || m.toLowerCase().includes('bge') || m.toLowerCase().includes('minilm')
-          )
-          const defaultEmbed = embedMList.length > 0 ? embedMList[0] : models[0]
-          setEmbeddingModel(defaultEmbed)
+          // Only pick default embedding model if current selection is not available
+          if (!models.includes(embeddingModel)) {
+            const embedMList = models.filter(m =>
+              m.toLowerCase().includes('embed') || m.toLowerCase().includes('bge') || m.toLowerCase().includes('minilm')
+            )
+            const defaultEmbed = embedMList.length > 0 ? embedMList[0] : models[0]
+            setEmbeddingModel(defaultEmbed)
+          }
 
-          // Categorize and pick default language model
-          const llmMList = models.filter(m =>
-            !(m.toLowerCase().includes('embed') || m.toLowerCase().includes('bge') || m.toLowerCase().includes('minilm'))
-          )
-          const defaultLlm = llmMList.length > 0 ? llmMList[0] : models[0]
-          setLlmModel(defaultLlm)
+          // Only pick default language model if current selection is not available
+          if (!models.includes(llmModel)) {
+            const llmMList = models.filter(m =>
+              !(m.toLowerCase().includes('embed') || m.toLowerCase().includes('bge') || m.toLowerCase().includes('minilm'))
+            )
+            const defaultLlm = llmMList.length > 0 ? llmMList[0] : models[0]
+            setLlmModel(defaultLlm)
+          }
         } else {
           setOllamaStatus('Offline')
           setOllamaHealthy(false)
