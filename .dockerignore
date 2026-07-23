@@ -1,0 +1,7 @@
+.git
+.agents
+.codex
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+storage
