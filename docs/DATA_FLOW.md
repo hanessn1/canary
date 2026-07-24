@@ -2,7 +2,11 @@
 
 This document describes the end-to-end data flow when a user uploads a new document into Canary.
 
-## Document Ingestion & Indexing Sequence Diagram
+## Step-by-Step Ingestion & Indexing Flow Diagram
+
+![alt text](diagrams/architecture_flow.svg)
+
+## Detailed Ingestion Sequence Diagram
 
 ```mermaid
 sequenceDiagram
