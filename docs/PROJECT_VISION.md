@@ -1,377 +1,49 @@
-# Canary — AI Document Intelligence Platform
+# Canary - AI Document Intelligence Platform
 
-### Project Goal
+## Executive Summary & Vision
 
-Canary is a fully local AI-powered document intelligence platform capable of ingesting documents, indexing them, understanding their contents, and answering user questions using Retrieval-Augmented Generation (RAG).
+**Canary** is a production-grade, local-first AI document intelligence platform. It provides document ingestion, asynchronous parsing, vector indexing, semantic search, hybrid retrieval, and Retrieval-Augmented Generation (RAG) using local LLMs.
 
-The primary objective is to build a production-quality software engineering project rather than a simple AI demo.
+Unlike simple AI prototypes, Canary emphasizes software engineering quality: clean architecture, modular service separation, robust error handling, state persistence, and zero reliance on external cloud AI APIs. All data processing and model inference remain local on the user's system.
 
-The application should emphasize:
+## Key Platform Capabilities
 
-- Clean architecture
-- Scalability
-- Modular design
-- Backend engineering best practices
-- Local-first execution
-- Modern AI techniques
+### 1. Document Ingestion & Parsing
+- Multi-format ingestion: **PDF**, **DOCX**, **TXT**, and **Markdown (`.md`)**.
+- Asynchronous status processing (`UPLOADED` -> `PROCESSING` -> `READY` / `FAILED`).
+- Document metadata tracking (checksum, original file name, size, page count, upload timestamp).
 
-The project should require **no cloud AI** APIs for its core functionality. All inference should run locally using Ollama or llama.cpp with GGUF models.
+### 2. Hybrid Retrieval Pipeline (FAISS + BM25)
+- **Dense Vector Search**: FAISS `IndexFlatIP` with L2-normalized cosine embeddings (`nomic-embed-text`).
+- **Sparse Keyword Search**: `BM25Okapi` re-ranking over candidate chunks.
+- **Combined Scoring**: Hybrid scoring formula ($0.7 \times \text{semantic\_score} + 0.3 \times \text{bm25\_score}$) to maximize retrieval precision.
 
-The system should be capable of processing large collections of documents while remaining responsive through asynchronous indexing, caching, and efficient retrieval.
+### 3. Retrieval-Augmented Generation (RAG)
+- Token-by-token **Server-Sent Events (SSE)** streaming.
+- Grounded prompt assembly with strict citation enforcement (`[Page <N>]`).
+- Interactive **Citation Inspector** panel in web UI.
+- Contextual intent classification to route general conversational queries vs. document-grounded queries.
 
-## Primary Objectives
+### 4. Interactive Tool Calling & Agent Loop
+- Autonomous tool execution loop supporting system time query, document library listing, and hybrid document search.
 
-The system should support:
+### 5. Local State & Parameter Persistence
+- Persistent configuration across tab navigation and browser refreshes (`localStorage` integration).
+- Configurable RAG controls: Temperature, Top-K chunk retrieval, and Cosine Similarity Thresholds.
 
-- Uploading documents
-- Parsing multiple document formats
-- Indexing documents
-- Semantic search
-- Hybrid search
-- Question answering
-- Summarization
-- Tool calling
-- Conversation history
-- Citation generation
-- Streaming responses
-- Multi-document reasoning
+## Technical Stack
 
-Everything should operate through a modern web interface.
+| Tier | Component | Technology |
+| :--- | :--- | :--- |
+| **Frontend** | Single Page Application | React 18, Vite, Custom Vanilla CSS, Lucide Icons |
+| **Backend API** | Orchestration & Storage | Java 25, Spring Boot 3.5, RestClient, SseEmitter |
+| **AI Service** | Embedding & Retrieval | Python 3.11, FastAPI, FAISS, rank_bm25, PyPDF, python-docx |
+| **LLM Engine** | Local Inference | Ollama (`qwen2.5:3b`, `nomic-embed-text`) |
+| **Deployment** | Multi-Container Stack | Docker, Docker Compose, Shared Storage Volumes |
 
-## Architecture Goals
+## Architectural Principles
 
-Always prioritize maintainability over quick implementation. The project should follow clean architecture principles.
-
-Suggested layers:
-
-```markdown
-Frontend
-
-↓
-
-REST API
-
-↓
-
-Service Layer
-
-↓
-
-AI Layer
-
-↓
-
-Storage Layer
-
-↓
-
-Vector Store
-```
-
-Every component should have a clearly defined responsibility. Avoid tightly coupling AI logic with business logic.
-
-## Technology Stack
-
-#### Backend
-
-- Spring Boot
-- REST APIs
-- Async processing
-- Dependency Injection
-
-#### Frontend
-
-- React
-
-#### Storage
-
-- SQLite initially
-- PostgreSQL later
-
-#### Vector Database
-
-- FAISS
-
-#### Inference
-
-- Ollama
-
-#### Embedding Models
-
-- Local embedding models
-
-#### Document Parsing
-
-- PDF
-- DOCX
-- TXT
-- Markdown
-
-#### Deployment
-
-- Docker
-
-## Functional Requirements
-
-### Document Upload
-
-Support:
-
-- PDF
-- DOCX
-- TXT
-- Markdown
-
-Future:
-
-- HTML
-- EPUB
-- CSV
-
-### Document Parsing
-
-Extract:
-
-- text
-- headings
-- metadata
-- page numbers
-- tables
-
-Future:
-
-- OCR
-- image captions
-
-### Chunking
-
-Implement multiple chunking strategies.
-
-Examples:
-
-- Fixed length
-- Recursive
-- Sentence based
-- Semantic chunking
-
-Chunking strategy should be configurable.
-
-### Embeddings
-
-Generate embeddings locally. Support swapping embedding models without changing business logic.
-
-### Vector Search
-
-Support
-
-- similarity search
-- top-k retrieval
-- configurable thresholds
-
-### Hybrid Retrieval
-
-Combine
-
-- Vector search
-- BM25
-
-Re-rank retrieved chunks before sending them to the LLM.
-
-### RAG Pipeline
-
-Pipeline should look like:
-
-```markdown
-Question
-
-↓
-
-Retriever
-
-↓
-
-Re-ranking
-
-↓
-
-Context Builder
-
-↓
-
-Prompt Builder
-
-↓
-
-LLM
-
-↓
-
-Streaming Response
-```
-
-Always cite source documents.
-
-### Question Answering
-
-Support:
-
-- single document
-- multiple documents
-- follow-up questions
-
-Conversation history should improve future responses.
-
-### Summarization
-
-Provide:
-
-- Executive summary
-- Bullet summary
-- Technical summary
-- Action items
-- FAQ generation
-
-### Tool Calling
-
-Support tools like:
-
-- Calculator
-- Date/time
-- Web search
-- Translation
-
-The LLM should decide when to invoke tools.
-
-### Streaming
-
-- Responses should stream token-by-token.
-- Support cancellation.
-
-### Web UI
-
-Modern web interface.
-
-Features:
-
-- Dark mode
-- Markdown rendering
-- Syntax highlighting
-- Drag-and-drop upload
-- Conversation sidebar
-- Citation viewer
-- Document explorer
-- Search history
-
-### Document Library
-
-Display:
-
-- upload date
-- size
-- pages
-- indexing status
-- embedding status
-
-Support deleting documents.
-
-### Search
-
-Support:
-
-- semantic search
-- keyword search
-- hybrid search
-
-Allow filtering by document.
-
-## Performance Requirements
-
-Implement:
-
-- embedding cache
-- document hashing
-- duplicate detection
-- asynchronous indexing
-- parallel parsing
-- batching
-
-Avoid recomputing embeddings.
-
-## Logging
-
-Use structured logging. Every request should log:
-
-- latency
-- retrieved chunks
-- LLM duration
-- embedding duration
-
-## Configuration
-
-Every configurable value should live in configuration.
-
-Examples:
-
-- model names
-- chunk size
-- overlap
-- retrieval count
-- temperature
-- embedding model
-
-Avoid hardcoding.
-
-## Coding Standards
-
-- Small focused classes
-- Single Responsibility Principle
-- Constructor Injection
-- Comprehensive error handling
-- Unit tests where practical
-- Clear naming
-- No duplicated logic
-- Prefer composition over inheritance
-
-## Non-Functional Goals
-
-The application should:
-
-- remain responsive during indexing
-- support thousands of documents
-- be modular
-- be easy to extend
-- support future cloud models
-- support future multimodal models
-
-## Future Roadmap
-
-Potential future features:
-
-- Image understanding
-- Audio transcription
-- Video indexing
-- Agent workflows
-- MCP integration
-- Knowledge graphs
-- Multi-agent collaboration
-- Research mode
-- Compare documents
-- Version comparison
-- Citation graphs
-- Automatic tagging
-- Local voice assistant
-- Mobile client
-- Plugin system
-
-## Instructions for Codex
-
-- Prioritize readability and maintainability over minimizing lines of code.
-- Follow clean architecture and keep concerns separated.
-- Before implementing a feature, explain the design, trade-offs, and proposed file structure.
-- Keep commits small and focused on a single feature.
-- Add concise comments where they clarify intent, not obvious behavior.
-- Prefer well-supported libraries over reinventing standard functionality.
-- When there are multiple implementation options, present the pros and cons before choosing one.
-- Ensure every new feature includes appropriate tests where practical.
-- Optimize for local execution with minimal memory usage.
-- Favor extensibility so future capabilities (multimodal input, new vector stores, or cloud providers) can be added with minimal changes.
+1. **Local-First Privacy**: User documents, vector indices, and conversation histories never leave the local environment.
+2. **Decoupled Service Layers**: Business logic in Spring Boot is independent of Python AI execution algorithms.
+3. **Fail-Safe Fallbacks**: Graceful error handling and fallback model lists ensure application stability even when Ollama is offline.
+4. **Configurable Execution**: Environment-driven pathing and customizable hyper-parameters allow running locally or inside Docker without hardcoded paths.
