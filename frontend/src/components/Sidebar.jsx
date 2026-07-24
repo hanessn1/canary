@@ -14,7 +14,7 @@ const navigation = [
 
 export default function Sidebar({ theme, setTheme }) {
   const apiStatus = useHealthCheck()
-  const { conversations, selectConversation, startNewChat, deleteConversation } = useChat()
+  const { conversations, activeConversation, selectConversation, startNewChat, deleteConversation } = useChat()
   const navigate = useNavigate()
   const [ollamaOnline, setOllamaOnline] = useState(false)
   const [ollamaStatus, setOllamaStatus] = useState('Checking')
@@ -66,20 +66,23 @@ export default function Sidebar({ theme, setTheme }) {
             </button>
           </div>
           <div className={styles.chatsList}>
-            {conversations.map((chat) => (
-              <div key={chat.id} className={styles.chatRow}>
-                <span onClick={() => handleChatClick(chat.id)} className={styles.chatLink}>
-                  <MessageSquare size={14} /> {chat.title}
-                </span>
-                <button 
-                  className={styles.deleteChatBtn} 
-                  onClick={(e) => { e.stopPropagation(); deleteConversation(chat.id); }} 
-                  title="Delete chat"
-                >
-                  <Trash2 size={13} />
-                </button>
-              </div>
-            ))}
+            {conversations.map((chat) => {
+              const isActive = chat.id === activeConversation?.id
+              return (
+                <div key={chat.id} className={`${styles.chatRow} ${isActive ? styles.activeChatRow : ''}`}>
+                  <span onClick={() => handleChatClick(chat.id)} className={styles.chatLink}>
+                    <MessageSquare size={14} /> {chat.title}
+                  </span>
+                  <button 
+                    className={styles.deleteChatBtn} 
+                    onClick={(e) => { e.stopPropagation(); deleteConversation(chat.id); }} 
+                    title="Delete chat"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

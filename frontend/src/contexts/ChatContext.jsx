@@ -11,12 +11,49 @@ const initialConversations = [
   }
 ]
 
+function getStoredValue(key, fallback) {
+  try {
+    const item = localStorage.getItem(key)
+    return item !== null ? JSON.parse(item) : fallback
+  } catch (e) {
+    return fallback
+  }
+}
+
 export function ChatProvider({ children }) {
   const [conversations, setConversations] = useState(initialConversations)
   const [activeId, setActiveId] = useState('chat-1')
-  const [temperature, setTemperature] = useState(0.2)
-  const [topK, setTopK] = useState(6)
-  const [similarityThreshold, setSimilarityThreshold] = useState(0.78)
+  
+  const [temperature, setTemperatureState] = useState(() => getStoredValue('canary_temperature', 0.3))
+  const [topK, setTopKState] = useState(() => getStoredValue('canary_top_k', 5))
+  const [similarityThreshold, setSimilarityThresholdState] = useState(() => getStoredValue('canary_similarity_threshold', 0.35))
+  const [llmModel, setLlmModelState] = useState(() => getStoredValue('canary_llm_model', 'qwen2.5:3b'))
+  const [embeddingModel, setEmbeddingModelState] = useState(() => getStoredValue('canary_embedding_model', 'nomic-embed-text'))
+
+  const setTemperature = (val) => {
+    setTemperatureState(val)
+    try { localStorage.setItem('canary_temperature', JSON.stringify(val)) } catch (_) {}
+  }
+
+  const setTopK = (val) => {
+    setTopKState(val)
+    try { localStorage.setItem('canary_top_k', JSON.stringify(val)) } catch (_) {}
+  }
+
+  const setSimilarityThreshold = (val) => {
+    setSimilarityThresholdState(val)
+    try { localStorage.setItem('canary_similarity_threshold', JSON.stringify(val)) } catch (_) {}
+  }
+
+  const setLlmModel = (val) => {
+    setLlmModelState(val)
+    try { localStorage.setItem('canary_llm_model', JSON.stringify(val)) } catch (_) {}
+  }
+
+  const setEmbeddingModel = (val) => {
+    setEmbeddingModelState(val)
+    try { localStorage.setItem('canary_embedding_model', JSON.stringify(val)) } catch (_) {}
+  }
 
   const activeConversation = useMemo(() => {
     return conversations.find((c) => c.id === activeId) || conversations[0]
@@ -59,30 +96,13 @@ export function ChatProvider({ children }) {
   }
 
   const sendMessage = async (content, documentIds = []) => {
-    if (!documentIds || documentIds.length === 0) {
-      setConversations((current) =>
-        current.map((chat) => {
-          if (chat.id === activeId) {
-            return {
-              ...chat,
-              messages: [
-                ...chat.messages,
-                { id: crypto.randomUUID(), role: 'user', content },
-                { id: crypto.randomUUID(), role: 'assistant', content: 'Please upload and select at least one document to chat.' }
-              ]
-            }
-          }
-          return chat
-        })
-      )
-      return
-    }
-
+    const targetChatId = activeId
     const userMsgId = crypto.randomUUID()
     const assistantMsgId = crypto.randomUUID()
+
     setConversations((current) =>
       current.map((chat) => {
-        if (chat.id === activeId) {
+        if (chat.id === targetChatId) {
           return {
             ...chat,
             messages: [
@@ -96,14 +116,15 @@ export function ChatProvider({ children }) {
       })
     )
 
-    const history = activeConversation.messages
+    const targetConv = conversations.find((c) => c.id === targetChatId) || activeConversation
+    const history = (targetConv?.messages || [])
       .filter(m => m.id !== userMsgId && m.id !== assistantMsgId && (m.role === 'user' || m.role === 'assistant'))
       .map(m => ({ role: m.role, content: m.content }))
 
     try {
       await chatApi.chatStream(
         content,
-        documentIds,
+        documentIds || [],
         history,
         temperature,
         topK,
@@ -111,7 +132,7 @@ export function ChatProvider({ children }) {
         (chunk) => {
           setConversations((current) =>
             current.map((chat) => {
-              if (chat.id === activeId) {
+              if (chat.id === targetChatId) {
                 return {
                   ...chat,
                   messages: chat.messages.map((msg) =>
@@ -126,7 +147,7 @@ export function ChatProvider({ children }) {
         (citations) => {
           setConversations((current) =>
             current.map((chat) => {
-              if (chat.id === activeId) {
+              if (chat.id === targetChatId) {
                 return {
                   ...chat,
                   messages: chat.messages.map((msg) =>
@@ -142,7 +163,7 @@ export function ChatProvider({ children }) {
     } catch (err) {
       setConversations((current) =>
         current.map((chat) => {
-          if (chat.id === activeId) {
+          if (chat.id === targetChatId) {
             return {
               ...chat,
               messages: chat.messages.map((msg) =>
@@ -180,9 +201,13 @@ export function ChatProvider({ children }) {
       topK,
       setTopK,
       similarityThreshold,
-      setSimilarityThreshold
+      setSimilarityThreshold,
+      llmModel,
+      setLlmModel,
+      embeddingModel,
+      setEmbeddingModel
     }),
-    [conversations, activeConversation, activeId, temperature, topK, similarityThreshold]
+    [conversations, activeConversation, activeId, temperature, topK, similarityThreshold, llmModel, embeddingModel]
   )
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>

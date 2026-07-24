@@ -12,7 +12,7 @@
 .ready svg { color: var(--emerald); }
 .failed svg { color: var(--danger); }
 .backdrop { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; padding: 20px; background: rgb(0 0 0 / 60%); backdrop-filter: blur(5px); }
-.dialog { position: relative; width: min(420px, 100%); padding: 28px; border: 1px solid var(--border-bright); border-radius: var(--radius-lg); background: #14151b; box-shadow: 0 24px 70px rgb(0 0 0 / 50%); }
+.dialog { position: relative; width: min(420px, 100%); padding: 28px; border: 1px solid var(--border-bright); border-radius: var(--radius-lg); background: var(--surface); color: var(--text); box-shadow: 0 24px 70px rgb(0 0 0 / 25%); }
 .dialog h2 { margin: 14px 0 8px; font-size: 1.25rem; }.dialog p { margin: 0; color: var(--text-muted); line-height: 1.55; }.dialog strong { color: var(--text); }.dangerIcon { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 50%; color: var(--danger); background: rgb(248 113 113 / 13%); }.close { position: absolute; top: 13px; right: 13px; display: grid; place-items: center; border: 0; color: var(--text-muted); background: transparent; }.dialogActions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
 .dialogError { margin-top: 14px; padding: 10px 12px; border-radius: var(--radius-sm); color: var(--danger); background: rgb(248 113 113 / 10%); font-size: 0.85rem; border: 1px dashed rgb(248 113 113 / 25%); line-height: 1.4; }
 @keyframes spin { to { transform: rotate(360deg); } }
