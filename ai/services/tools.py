@@ -1,7 +1,7 @@
 import datetime
 import json
 from typing import List, Dict, Any
-from ai.config import BASE_DIR
+from ai.config import STORAGE_DIR
 
 
 def get_system_time() -> str:
@@ -11,7 +11,7 @@ def get_system_time() -> str:
 
 def list_documents() -> List[Dict[str, Any]]:
 	"""List all uploaded documents in the library along with their metadata."""
-	metadata_path = BASE_DIR / "storage" / "documents.json"
+	metadata_path = STORAGE_DIR / "documents.json"
 	if not metadata_path.exists():
 		return []
 	try:
