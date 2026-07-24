@@ -14,6 +14,12 @@ Designed with clean architecture principles, Canary decouples presentation, busi
 
 ## Architecture Overview
 
+### Document Ingestion & Indexing Pipeline
+
+![Canary Document Ingestion & Indexing Flow](docs/diagrams/architecture_flow.svg)
+
+### System Topology & Component Interactions
+
 ```mermaid
 graph LR
     subgraph ClientLayer ["1. Presentation Layer"]
