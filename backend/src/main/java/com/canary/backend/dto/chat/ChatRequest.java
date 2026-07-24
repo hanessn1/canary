@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public record ChatRequest(
 	@NotBlank String query,
-	@NotEmpty List<UUID> documentIds,
+	List<UUID> documentIds,
 	List<ChatMessage> history,
 	Double temperature,
 	Integer topK,
