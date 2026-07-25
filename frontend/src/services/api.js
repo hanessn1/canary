@@ -56,12 +56,12 @@ export const documentApi = {
 }
 
 export const chatApi = {
-  chat: (query, documentIds, history = []) => request('/chat', {
+  chat: (query, documentIds, history = [], model = null) => request('/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, documentIds, history })
+    body: JSON.stringify({ query, documentIds, history, model })
   }),
-  chatStream: async (query, documentIds, history = [], temperature, topK, similarityThreshold, onChunk, onCitations) => {
+  chatStream: async (query, documentIds, history = [], temperature, topK, similarityThreshold, model, onChunk, onCitations) => {
     const response = await fetch(`${API_BASE}/chat/stream`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -71,7 +71,8 @@ export const chatApi = {
         history, 
         temperature, 
         topK, 
-        similarityThreshold 
+        similarityThreshold,
+        model
       })
     })
 

@@ -1,5 +1,5 @@
-import { createContext, useContext, useMemo, useState } from 'react'
-import { chatApi } from '../services/api'
+import { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react'
+import { chatApi, getModels } from '../services/api'
 
 const ChatContext = createContext(null)
 
@@ -20,6 +20,18 @@ function getStoredValue(key, fallback) {
   }
 }
 
+function isLlmModelName(name) {
+  if (!name) return false
+  const lower = name.toLowerCase()
+  return !(lower.includes('embed') || lower.includes('bge') || lower.includes('minilm'))
+}
+
+function isEmbeddingModelName(name) {
+  if (!name) return false
+  const lower = name.toLowerCase()
+  return lower.includes('embed') || lower.includes('bge') || lower.includes('minilm')
+}
+
 export function ChatProvider({ children }) {
   const [conversations, setConversations] = useState(initialConversations)
   const [activeId, setActiveId] = useState('chat-1')
@@ -29,6 +41,57 @@ export function ChatProvider({ children }) {
   const [similarityThreshold, setSimilarityThresholdState] = useState(() => getStoredValue('canary_similarity_threshold', 0.35))
   const [llmModel, setLlmModelState] = useState(() => getStoredValue('canary_llm_model', 'qwen2.5:3b'))
   const [embeddingModel, setEmbeddingModelState] = useState(() => getStoredValue('canary_embedding_model', 'nomic-embed-text'))
+  
+  const [availableModels, setAvailableModels] = useState([])
+  const [isModelsLoading, setIsModelsLoading] = useState(true)
+
+  const setLlmModel = (val) => {
+    setLlmModelState(val)
+    try { localStorage.setItem('canary_llm_model', JSON.stringify(val)) } catch (_) {}
+  }
+
+  const setEmbeddingModel = (val) => {
+    setEmbeddingModelState(val)
+    try { localStorage.setItem('canary_embedding_model', JSON.stringify(val)) } catch (_) {}
+  }
+
+  const refreshModels = useCallback(async () => {
+    setIsModelsLoading(true)
+    try {
+      const models = await getModels()
+      if (models && models.length > 0) {
+        setAvailableModels(models)
+        
+        const llmMList = models.filter(isLlmModelName)
+        if (!isLlmModelName(llmModel) || !models.includes(llmModel)) {
+          if (llmMList.length > 0) {
+            setLlmModel(llmMList[0])
+          }
+        }
+
+        const embedMList = models.filter(isEmbeddingModelName)
+        if (!isEmbeddingModelName(embeddingModel) || !models.includes(embeddingModel)) {
+          if (embedMList.length > 0) {
+            setEmbeddingModel(embedMList[0])
+          }
+        }
+      } else {
+        setAvailableModels([])
+      }
+    } catch (_) {
+      setAvailableModels([])
+    } finally {
+      setIsModelsLoading(false)
+    }
+  }, [llmModel, embeddingModel])
+
+  useEffect(() => {
+    refreshModels()
+  }, [])
+
+  const hasLlmModel = useMemo(() => {
+    return availableModels.some(isLlmModelName)
+  }, [availableModels])
 
   const setTemperature = (val) => {
     setTemperatureState(val)
@@ -43,16 +106,6 @@ export function ChatProvider({ children }) {
   const setSimilarityThreshold = (val) => {
     setSimilarityThresholdState(val)
     try { localStorage.setItem('canary_similarity_threshold', JSON.stringify(val)) } catch (_) {}
-  }
-
-  const setLlmModel = (val) => {
-    setLlmModelState(val)
-    try { localStorage.setItem('canary_llm_model', JSON.stringify(val)) } catch (_) {}
-  }
-
-  const setEmbeddingModel = (val) => {
-    setEmbeddingModelState(val)
-    try { localStorage.setItem('canary_embedding_model', JSON.stringify(val)) } catch (_) {}
   }
 
   const activeConversation = useMemo(() => {
@@ -129,6 +182,7 @@ export function ChatProvider({ children }) {
         temperature,
         topK,
         similarityThreshold,
+        llmModel,
         (chunk) => {
           setConversations((current) =>
             current.map((chat) => {
@@ -205,9 +259,13 @@ export function ChatProvider({ children }) {
       llmModel,
       setLlmModel,
       embeddingModel,
-      setEmbeddingModel
+      setEmbeddingModel,
+      availableModels,
+      hasLlmModel,
+      isModelsLoading,
+      refreshModels
     }),
-    [conversations, activeConversation, activeId, temperature, topK, similarityThreshold, llmModel, embeddingModel]
+    [conversations, activeConversation, activeId, temperature, topK, similarityThreshold, llmModel, embeddingModel, availableModels, hasLlmModel, isModelsLoading, refreshModels]
   )
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>

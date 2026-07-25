@@ -69,6 +69,7 @@ class ChatRequest(BaseModel):
 	temperature: Optional[float] = 0.3
 	top_k: Optional[int] = 5
 	similarity_threshold: Optional[float] = 0.35
+	model: Optional[str] = None
 
 
 @app.post("/api/v1/index")
@@ -119,17 +120,16 @@ async def get_ollama_models():
 				data = resp.json()
 				# Return all tags
 				tags = [m["name"] for m in data.get("models", [])]
-				if tags:
-					return {
-						"status": "success",
-						"models": tags
-					}
+				return {
+					"status": "success",
+					"models": tags
+				}
 	except Exception:
 		pass
-	# Fallback list if Ollama is offline or has no tags
+	# Empty list if Ollama is offline or has no tags
 	return {
-		"status": "fallback",
-		"models": ["qwen2.5:3b", "nomic-embed-text"]
+		"status": "offline",
+		"models": []
 	}
 
 
@@ -154,7 +154,8 @@ async def chat_with_docs(payload: ChatRequest):
 			chunks,
 			hist,
 			payload.stream,
-			temperature=payload.temperature
+			temperature=payload.temperature,
+			model=payload.model
 		)
 
 		if payload.stream:
