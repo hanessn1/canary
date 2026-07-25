@@ -1,4 +1,4 @@
-# Canary — Local-First AI Document Intelligence Platform
+# Canary - Local-First AI Document Intelligence Platform
 
 [![Java 25](https://img.shields.io/badge/Java-25-orange.svg?style=flat-square&logo=openjdk)](https://openjdk.org/)
 [![Spring Boot 3.5](https://img.shields.io/badge/Spring_Boot-3.5.0-6DB33F.svg?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
