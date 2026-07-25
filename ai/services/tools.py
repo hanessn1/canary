@@ -27,14 +27,22 @@ TOOL_SCHEMAS = [
 		"type": "function",
 		"function": {
 			"name": "get_system_time",
-			"description": "Get the current local system date and time."
+			"description": "Get the current local system date and time.",
+			"parameters": {
+				"type": "object",
+				"properties": {}
+			}
 		}
 	},
 	{
 		"type": "function",
 		"function": {
 			"name": "list_documents",
-			"description": "List all uploaded documents in the library along with their metadata (id, originalFilename, sizeBytes, status, uploadedAt)."
+			"description": "List all uploaded documents in the library along with their metadata (id, originalFilename, sizeBytes, status, uploadedAt).",
+			"parameters": {
+				"type": "object",
+				"properties": {}
+			}
 		}
 	},
 	{

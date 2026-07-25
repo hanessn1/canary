@@ -20,7 +20,7 @@ export default function SettingsView() {
     setLlmModel
   } = useChat()
 
-  const [availableModels, setAvailableModels] = useState(['qwen2.5:3b', 'nomic-embed-text'])
+  const [availableModels, setAvailableModels] = useState([])
   const [ollamaStatus, setOllamaStatus] = useState('Checking')
   const [ollamaHealthy, setOllamaHealthy] = useState(false)
 
@@ -32,45 +32,42 @@ export default function SettingsView() {
           setOllamaStatus('Online')
           setOllamaHealthy(true)
           
-          // Only pick default embedding model if current selection is not available
-          if (!models.includes(embeddingModel)) {
-            const embedMList = models.filter(m =>
-              m.toLowerCase().includes('embed') || m.toLowerCase().includes('bge') || m.toLowerCase().includes('minilm')
-            )
-            const defaultEmbed = embedMList.length > 0 ? embedMList[0] : models[0]
+          const isEmbed = (m) => m && (m.toLowerCase().includes('embed') || m.toLowerCase().includes('bge') || m.toLowerCase().includes('minilm'))
+          const isLlm = (m) => m && !(m.toLowerCase().includes('embed') || m.toLowerCase().includes('bge') || m.toLowerCase().includes('minilm'))
+
+          if (!isEmbed(embeddingModel) || !models.includes(embeddingModel)) {
+            const embedMList = models.filter(isEmbed)
+            const defaultEmbed = embedMList.length > 0 ? embedMList[0] : (models[0] || '')
             setEmbeddingModel(defaultEmbed)
           }
 
-          // Only pick default language model if current selection is not available
-          if (!models.includes(llmModel)) {
-            const llmMList = models.filter(m =>
-              !(m.toLowerCase().includes('embed') || m.toLowerCase().includes('bge') || m.toLowerCase().includes('minilm'))
-            )
-            const defaultLlm = llmMList.length > 0 ? llmMList[0] : models[0]
+          if (!isLlm(llmModel) || !models.includes(llmModel)) {
+            const llmMList = models.filter(isLlm)
+            const defaultLlm = llmMList.length > 0 ? llmMList[0] : (models[0] || '')
             setLlmModel(defaultLlm)
           }
         } else {
-          setOllamaStatus('Offline')
+          setAvailableModels([])
+          setOllamaStatus('No models')
           setOllamaHealthy(false)
         }
       })
       .catch((err) => {
         console.error('Failed to load Ollama models:', err)
+        setAvailableModels([])
         setOllamaStatus('Offline')
         setOllamaHealthy(false)
       })
   }, [])
 
   // Filter models for selection dropdowns
-  const embeddingModels = availableModels.filter(m =>
+  const finalEmbeddingModels = availableModels.filter(m =>
     m.toLowerCase().includes('embed') || m.toLowerCase().includes('bge') || m.toLowerCase().includes('minilm')
   )
-  const finalEmbeddingModels = embeddingModels.length > 0 ? embeddingModels : ['nomic-embed-text']
 
-  const llmModels = availableModels.filter(m =>
+  const finalLlmModels = availableModels.filter(m =>
     !(m.toLowerCase().includes('embed') || m.toLowerCase().includes('bge') || m.toLowerCase().includes('minilm'))
   )
-  const finalLlmModels = llmModels.length > 0 ? llmModels : ['qwen2.5:3b']
 
   return (
     <div className={styles.page}>
@@ -93,6 +90,7 @@ export default function SettingsView() {
               value={embeddingModel}
               onChange={setEmbeddingModel}
               options={finalEmbeddingModels}
+              placeholder="No models available"
             />
           </label>
           <label style={{ marginTop: '12px', display: 'block' }}>
@@ -101,6 +99,7 @@ export default function SettingsView() {
               value={llmModel}
               onChange={setLlmModel}
               options={finalLlmModels}
+              placeholder="No models available"
             />
           </label>
         </Panel>
@@ -165,7 +164,7 @@ function Range({ label, value, onChange, min = 0, max = 1, step = 0.01 }) {
   ) 
 }
 
-function CustomSelect({ value, onChange, options }) {
+function CustomSelect({ value, onChange, options, placeholder = "No models available" }) {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef(null)
 
@@ -179,18 +178,28 @@ function CustomSelect({ value, onChange, options }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  const hasOptions = options && options.length > 0
+  const selectedOption = hasOptions ? (options.includes(value) ? value : options[0]) : ''
+  const displayValue = hasOptions ? selectedOption : placeholder
+
   return (
     <div ref={containerRef} className={styles.customSelectContainer}>
-      <button type="button" className={styles.customSelectTrigger} onClick={() => setIsOpen(!isOpen)}>
-        {value} <ChevronDown size={14} />
+      <button 
+        type="button" 
+        className={styles.customSelectTrigger} 
+        onClick={() => hasOptions && setIsOpen(!isOpen)}
+        disabled={!hasOptions}
+        style={!hasOptions ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+      >
+        {displayValue} <ChevronDown size={14} />
       </button>
-      {isOpen && (
+      {isOpen && hasOptions && (
         <div className={styles.customSelectDropdown}>
           {options.map((option) => (
             <button
               key={option}
               type="button"
-              className={value === option ? styles.activeOption : ''}
+              className={selectedOption === option ? styles.activeOption : ''}
               onClick={() => {
                 onChange(option)
                 setIsOpen(false)

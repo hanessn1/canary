@@ -12,6 +12,7 @@ public record ChatRequest(
 	List<ChatMessage> history,
 	Double temperature,
 	Integer topK,
-	Double similarityThreshold
+	Double similarityThreshold,
+	String model
 ) {
 }
