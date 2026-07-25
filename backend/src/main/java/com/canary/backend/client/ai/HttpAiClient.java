@@ -94,8 +94,8 @@ public class HttpAiClient implements AiClient {
 		try {
 			Map<String, Object> body = new HashMap<>();
 			body.put("query", request.query());
-			body.put("document_ids", request.documentIds().stream().map(UUID::toString).toList());
-			body.put("history", request.history());
+			body.put("document_ids", request.documentIds() != null ? request.documentIds().stream().map(UUID::toString).toList() : java.util.List.of());
+			body.put("history", request.history() != null ? request.history() : java.util.List.of());
 			body.put("stream", false);
 			if (request.temperature() != null) {
 				body.put("temperature", request.temperature());
@@ -105,6 +105,9 @@ public class HttpAiClient implements AiClient {
 			}
 			if (request.similarityThreshold() != null) {
 				body.put("similarity_threshold", request.similarityThreshold());
+			}
+			if (request.model() != null && !request.model().isBlank()) {
+				body.put("model", request.model());
 			}
 
 			return restClient.post()
@@ -125,8 +128,8 @@ public class HttpAiClient implements AiClient {
 		try {
 			Map<String, Object> body = new HashMap<>();
 			body.put("query", request.query());
-			body.put("document_ids", request.documentIds().stream().map(UUID::toString).toList());
-			body.put("history", request.history());
+			body.put("document_ids", request.documentIds() != null ? request.documentIds().stream().map(UUID::toString).toList() : java.util.List.of());
+			body.put("history", request.history() != null ? request.history() : java.util.List.of());
 			body.put("stream", true);
 			if (request.temperature() != null) {
 				body.put("temperature", request.temperature());
@@ -136,6 +139,9 @@ public class HttpAiClient implements AiClient {
 			}
 			if (request.similarityThreshold() != null) {
 				body.put("similarity_threshold", request.similarityThreshold());
+			}
+			if (request.model() != null && !request.model().isBlank()) {
+				body.put("model", request.model());
 			}
 
 			restClient.post()
@@ -165,13 +171,13 @@ public class HttpAiClient implements AiClient {
 				.uri("/api/v1/models")
 				.retrieve()
 				.body(new org.springframework.core.ParameterizedTypeReference<java.util.Map<String, Object>>() {});
-			if (response != null && ("success".equals(response.get("status")) || "fallback".equals(response.get("status")))) {
-				return (java.util.List<String>) response.get("models");
+			if (response != null && response.get("models") instanceof java.util.List<?> list) {
+				return (java.util.List<String>) list;
 			}
 		} catch (Exception e) {
 			LOGGER.warn("Failed to fetch models from AI service: {}", e.getMessage());
 		}
-		return java.util.List.of("qwen2.5:3b", "nomic-embed-text");
+		return java.util.List.of();
 	}
 
 

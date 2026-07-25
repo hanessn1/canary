@@ -47,7 +47,11 @@ public class ChatController {
 				});
 				emitter.complete();
 			} catch (Exception ex) {
-				emitter.completeWithError(ex);
+				try {
+					String safeMsg = ex.getMessage() != null ? ex.getMessage().replace("\"", "'") : "AI service unavailable";
+					emitter.send(SseEmitter.event().data("{\"content\": \"Error: " + safeMsg + "\", \"done\": true}"));
+				} catch (Exception ignore) {}
+				emitter.complete();
 			}
 		});
 

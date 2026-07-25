@@ -1,8 +1,15 @@
+import sys
+from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional
+
+# Add parent directory to sys.path to resolve 'ai' imports regardless of CWD
+_parent_dir = str(Path(__file__).resolve().parent.parent)
+if _parent_dir not in sys.path:
+	sys.path.insert(0, _parent_dir)
 
 import httpx
 from ai.config import UPLOAD_DIR, OLLAMA_URL
@@ -30,6 +37,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Canary AI Service", lifespan=lifespan)
 
 
+@app.get("/health")
+async def health_check():
+	return {"status": "healthy"}
+
+
 # DTO schemas
 class IndexRequest(BaseModel):
 	document_id: str
@@ -51,12 +63,13 @@ class Message(BaseModel):
 
 class ChatRequest(BaseModel):
 	query: str
-	document_ids: List[str]
+	document_ids: Optional[List[str]] = []
 	history: Optional[List[Message]] = []
 	stream: Optional[bool] = True
-	temperature: Optional[float] = 0.2
-	top_k: Optional[int] = 6
-	similarity_threshold: Optional[float] = 0.78
+	temperature: Optional[float] = 0.3
+	top_k: Optional[int] = 5
+	similarity_threshold: Optional[float] = 0.35
+	model: Optional[str] = None
 
 
 @app.post("/api/v1/index")
@@ -107,17 +120,16 @@ async def get_ollama_models():
 				data = resp.json()
 				# Return all tags
 				tags = [m["name"] for m in data.get("models", [])]
-				if tags:
-					return {
-						"status": "success",
-						"models": tags
-					}
+				return {
+					"status": "success",
+					"models": tags
+				}
 	except Exception:
 		pass
-	# Fallback list if Ollama is offline or has no tags
+	# Empty list if Ollama is offline or has no tags
 	return {
-		"status": "fallback",
-		"models": ["qwen2.5:3b", "nomic-embed-text"]
+		"status": "offline",
+		"models": []
 	}
 
 
@@ -142,7 +154,8 @@ async def chat_with_docs(payload: ChatRequest):
 			chunks,
 			hist,
 			payload.stream,
-			temperature=payload.temperature
+			temperature=payload.temperature,
+			model=payload.model
 		)
 
 		if payload.stream:

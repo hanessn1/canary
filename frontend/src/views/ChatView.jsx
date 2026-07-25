@@ -1,4 +1,4 @@
-import { ChevronDown, FileText, Paperclip, Send, X, Info, Bird } from 'lucide-react'
+import { ChevronDown, FileText, Paperclip, Send, X, Info, Bird, AlertTriangle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useChat } from '../contexts/ChatContext'
 import { useDocuments } from '../contexts/DocumentsContext'
@@ -7,7 +7,7 @@ import styles from './ChatView.module.css'
 const sampleAnswer = `The chat workspace is ready for retrieval-augmented responses. When local AI processing is connected, answers will cite exact document chunks here.`
 
 export default function ChatView() {
-  const { activeConversation, sendMessage, updateConversationTitle } = useChat()
+  const { activeConversation, sendMessage, updateConversationTitle, hasLlmModel, isModelsLoading } = useChat()
   const { documents } = useDocuments()
   const [draft, setDraft] = useState('')
   const [isInspectorOpen, setInspectorOpen] = useState(false)
@@ -42,8 +42,10 @@ export default function ChatView() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [activeConversation.messages])
 
+  const isDisabled = isModelsLoading || !hasLlmModel
+
   const submit = () => {
-    if (!draft.trim()) return
+    if (isDisabled || !draft.trim()) return
     const targetDocIds = selectedScope === 'All documents'
       ? documents.map(d => d.id)
       : [documents.find(d => d.originalFilename === selectedScope)?.id].filter(Boolean)
@@ -59,6 +61,7 @@ export default function ChatView() {
   }
 
   const handleCardClick = (promptText) => {
+    if (isDisabled) return
     setDraft(promptText)
     setTimeout(() => {
       textareaRef.current?.focus()
@@ -186,17 +189,30 @@ export default function ChatView() {
         </div>
 
         <div className={styles.composer}>
-          <div className={styles.composerContainer}>
+          {!isModelsLoading && !hasLlmModel && (
+            <div className={styles.noModelBanner}>
+              <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+              <span>No language models available in Ollama. Please pull or install a model (e.g. <code>ollama pull qwen2.5:3b</code>) to enable chat responses.</span>
+            </div>
+          )}
+          <div className={styles.composerContainer} style={isDisabled ? { opacity: 0.65 } : {}}>
             <textarea
               ref={textareaRef}
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="Ask about your documents..."
+              placeholder={isModelsLoading ? "Checking models..." : hasLlmModel ? "Ask about your documents..." : "No language models available in Ollama..."}
+              disabled={isDisabled}
             />
             <div className={styles.composerActions}>
-              <span>Enter to send · Shift+Enter for new line</span>
-              <button className={styles.send} onClick={submit} aria-label="Send message">
+              <span>{isModelsLoading ? "Checking models..." : hasLlmModel ? "Enter to send · Shift+Enter for new line" : "Chat disabled — No model available"}</span>
+              <button 
+                className={styles.send} 
+                onClick={submit} 
+                disabled={isDisabled} 
+                aria-label="Send message"
+                style={isDisabled ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+              >
                 <Send size={15} />
               </button>
             </div>
